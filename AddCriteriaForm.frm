@@ -1,0 +1,167 @@
+VERSION 5.00
+Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} AddCriteriaForm 
+   Caption         =   "Formuláø pro pøidání kritérií"
+   ClientHeight    =   2640
+   ClientLeft      =   96
+   ClientTop       =   228
+   ClientWidth     =   4128
+   OleObjectBlob   =   "AddCriteriaForm.frx":0000
+   StartUpPosition =   1  'CenterOwner
+End
+Attribute VB_Name = "AddCriteriaForm"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = True
+Attribute VB_Exposed = False
+' Mimo proceduru => deklarace promìných globálnì pro celý modul
+Dim ws As Worksheet
+
+' Promìnná poètu kritérií
+Dim numOfCriteria As Integer
+
+' Promìnná poètu variant
+Dim numOfCandidates As Integer
+
+' Pøíprava True/False promìnné pro obsluhu otevírání UserFormu - volána v metodì InputData
+Dim criteriaDone As Boolean
+
+Private Sub UserForm_Initialize()
+    
+    ' Pøi inicializaci formuláøe bude TextBox1 aktivní pro vstup uživatele
+    TextBox1.SetFocus
+    
+    Set ws = ThisWorkbook.Sheets("Vstupní data")
+    
+    ' Získání aktuálního poètu kritérií (pokud už nìjaká jsou)
+    numOfCriteria = ws.Range("C2").value
+    
+    ' Schování tlaèítka, pokud existuje
+    HideButton ws, "Pøidat kritérium"
+    
+    ' Pøidání tlaèítka pro pøidání dalších kritérií
+    AddButtonTo ws, ws.Range("B" & 6 + numOfCriteria), "Pøidat kritérium", "AddMoreCriteria"
+    
+    ThisWorkbook.Sheets("Vstupní data").Protect "1234"
+    
+    ' Reset the size
+    With frm
+        ' Set the form size
+        Height = 160
+        Width = 269
+    End With
+    
+End Sub
+
+' Procedura ovládající tlaèítko Pøidat kritérium, reaguje na stisknutí tlaèítka
+Private Sub AddButton_Click()
+
+' Pøidání nového kritéria na list Vstupní data
+    Set ws = ThisWorkbook.Sheets("Vstupní data")
+    
+    ' Urèení øádku pro nové kritérium
+    Dim lastRow As Long
+    lastRow = ws.Cells(ws.Rows.Count, "B").End(xlUp).Row + 1
+    
+    Dim validInput As Boolean
+    
+    ' Cyklus, který bude kontrolovat vstup proti všem podmínkám, dokud nebude validní
+    Do
+        ' Pokud TextBox je prázdný, zobrazí se chybová zpráva
+        If TextBox1.Text = "" Then
+            MsgBox "Název kritéria nesmí být prázdný.", vbExclamation
+            
+            ' Ukonèit proceduru, ale nechat formuláø otevøený
+            TextBox1.SetFocus
+            ThisWorkbook.Sheets("Vstupní data").Protect "1234"
+            Exit Sub
+            
+        Else
+            ' Znovunaètení aktuálního listu
+            Set ws = ThisWorkbook.Sheets("Vstupní data")
+            
+            ' Získání aktuálního poètu kritérií
+            numOfCriteria = ws.Range("C2").value
+        
+            ' Kontrola, zda se kritérium se stejným názvem již nevyskytuje
+            If Not IsUniqueValue(ws.Range(ws.Cells(5, 2), ws.Cells(4 + numOfCriteria, 2)), TextBox1.Text) Then
+                MsgBox "Kritéria musí být unikátní!", vbExclamation
+                
+                ' Ukonèit proceduru, ale nechat formuláø otevøený
+                TextBox1.SetFocus
+                ThisWorkbook.Sheets("Vstupní data").Protect "1234"
+                Exit Sub
+            Else
+                ' Platný vstup
+                validInput = True
+            End If
+        End If
+    Loop Until validInput
+        
+    ws.Unprotect "1234"
+    ' Zapsání názvu kritéria na list jako text
+    ws.Cells(lastRow, 2).value = "'" & TextBox1.Text
+    
+    ' Aktualizace poètu kritérií z listu
+    ws.Range("C2").value = numOfCriteria + 1
+    numOfCriteria = numOfCriteria + 1
+    
+    ' Vyprázdnìní pole pro název kritéria
+    TextBox1.Text = ""
+    
+    ' Aktivace TextBoxu pro další vstup
+    TextBox1.SetFocus
+    
+    ws.Buttons.Delete
+        
+    ' Pøidání tlaèítka pro pøidání dalších kritérií
+    AddButtonTo ws, ws.Range("B" & 6 + numOfCriteria), "Pøidat kritérium", "AddMoreCriteria"
+    
+    'Pøi jednom a více kritériu pøidat tlaèítko pro odebrání kritéria
+    If numOfCriteria > 0 Then
+        AddButtonTo ws, ws.Range("D" & 6 + numOfCriteria), "Odebrat kritérium", "RemoveCriteria"
+    End If
+    
+    ' Stanovit váhy lze pouze, když jsou pøítomna aspoò dvì kritéria
+    If numOfCriteria > 1 Then
+        AddButtonTo ws, ws.Range("F" & 6 + numOfCriteria), "Stanovit váhy", "MoveToM2"
+    End If
+    
+    ' Získání aktuálního poètu variant
+    numOfCandidates = ws.Range("F2").value
+    
+    If Not IsEmpty(ws.Range("E2")) Then
+        ' Pøidání tlaèítka pro pøidání dalších variant
+        AddButtonTo ws, ws.Cells(2, 8), "Pøidat variantu", "AddMoreCandidates"
+        
+        ' Pøidání tlaèítka pro odebrání kritérií, pokud je poèet variant > 0
+        If numOfCandidates > 0 Then
+            AddButtonTo ws, ws.Cells(2, 10), "Odebrat variantu", "RemoveCandidate"
+        End If
+    End If
+    
+    ' Úprava šíøky sloupcù
+    AdjustColumnWidth ws, 2
+    
+    ThisWorkbook.Sheets("Vstupní data").Protect "1234"
+
+End Sub
+
+' Procedura obsluhující stisknutí tlaèítka pokraèovat
+Private Sub Continue_Click()
+    Set ws = ThisWorkbook.Sheets("Vstupní data")
+    
+    ' Kontrola poètu kritérií, spodní hranice 2
+    If ws.Range("C2").value < 2 Then
+        MsgBox "Pøi rozhodování bychom mìli zohledòovat minimálnì 2 kritéria.", vbExclamation
+        Me.Hide
+        AddCriteriaForm.Show
+    End If
+    
+    ' Zavøení UserFormu
+    Unload Me
+    ' Pøechod zpìt do Vstupní data pomocí boolean podmínky criteriaDone
+    criteriaDone = True
+    
+    ThisWorkbook.Sheets("Vstupní data").Protect "1234"
+    
+End Sub
