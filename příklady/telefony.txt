@@ -1,0 +1,15 @@
+Počet kritérií	12		Počet variant	10								
+			Varianta									
+Kritérium	Cíl	Váha	Realme 6	Xiaomi 9	Honor 9A	Realme X50	Xiaomi 8	Samsung S10	Apple SE	Realme X2	Samsung S20	Asus ROG 3
+Orientační cena (Kč)	min	15%	5 000	4 500	3 800	9 000	5 500	15 000	14 500	11 000	27 500	23 000
+Počet jader procesoru	max	6%	8	8	8	8	8	8	6	8	8	8
+Max. frekvence procesoru (GHz)	max	8%	2,05	2,00	2,00	2,40	2,30	2,70	2,65	2,96	2,75	3,10
+Operační paměť RAM (GB)	max	10%	4	4	3	6	4	8	3	8	12	8
+Výkon podle AnTuTu (100 bodů)	max	12%	293,3	203,4	95,7	331,4	293,0	417,4	496,6	500,0	518,1	582,6
+Velikost úložiště (GB)	max	11%	64	64	64	128	128	128	128	128	128	256
+Úhlopříčka (v palcích ")	max	5%	6,50	6,53	5,45	6,57	6,40	6,10	4,70	6,50	6,90	6,53
+Rozlišení displeje (Mpx)	max	6%	2,59	2,53	1,15	2,59	2,53	4,38	1,00	2,59	4,61	2,53
+Jemnost displeje (ppi)	max	6%	405	394	294	401	395	550	326	402	511	391
+Rozlišení fotoaparátu (Mpx)	max	9%	13	13	13	48	64	12	12	64	108	64
+Počet fotoaparátů	max	2%	4	4	3	4	4	3	1	4	4	3
+Kapacita akumulátoru (mAh)	max	10%	4 300	5 020	5 000	4 200	4 500	3 400	1 821	4 000	5 000	6 000

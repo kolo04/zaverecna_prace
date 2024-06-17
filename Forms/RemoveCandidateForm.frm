@@ -15,18 +15,18 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Private Sub UserForm_Initialize()
 
-    ' Nastav focus na ListBox
+    ' Nastavení focus na ListBox
     CandidateListBox.SetFocus
     
-    ' Reset the size
+    ' Nastavení velikosti formuláøe
     With frm
-        ' Set the form size
         Height = 200
         Width = 269
     End With
     
 End Sub
 
+' Skript reagující na stisk tlaèítka
 Private Sub RemoveButton_Click()
     Dim selectedCandidateIndex As Integer
     Dim selectedCandidate As String
@@ -35,10 +35,10 @@ Private Sub RemoveButton_Click()
     Dim numOfCandidates As Integer
     Dim numOfCriteria As Integer
     
-    ' Nastav pracovní list, kde jsou varianty uloženy
+    ' Nastavení pracovního listu, kde jsou varianty uloženy
     Set ws = ThisWorkbook.Sheets("Vstupní data")
     
-    ' Zkontroluj, zda je vybrána varianta
+    ' Kontrola, zda je vybrána varianta
     If CandidateListBox.ListIndex = -1 Then
         MsgBox "Vyberte prosím variantu k odebrání.", vbExclamation
         Exit Sub
@@ -67,18 +67,23 @@ Private Sub RemoveButton_Click()
         
         ' Snížení hodnoty v buòce F2 o 1
         .Range("F2").value = numOfCandidates - 1
-        
     End With
     
     ' Odebrání vybrané varianty z ListBoxu
     CandidateListBox.RemoveItem selectedCandidateIndex
     
-    ' Zkontroluj, zda zùstal ještì nìjaký prvek v ListBoxu
+    ' Kontrola, zda zùstal ještì nìjaký prvek v ListBoxu
     If CandidateListBox.ListCount = 0 Then
         MsgBox "Není žádná varianta k odebrání.", vbInformation
         Me.Hide
         HideButton ws, "Odebrat variantu"
         Exit Sub
+    End If
+    
+    If CandidateListBox.ListCount < 2 Then
+        HideButton ws, "Upravit hodnoty"
+        HideButton ws, "Metoda WSA"
+        HideButton ws, "Metoda bazické varianty"
     End If
     
     ' Zpráva potvrzující odebrání varianty

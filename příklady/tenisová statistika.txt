@@ -1,0 +1,10 @@
+Počet kritérií	7		Počet variant	7					
+			Varianta						
+Kritérium	Cíl	Váha	Roger Federer	Rafael Nadal	Novak Djokovic	Andy Murray	Taro Daniel	Marco Cecchinato	Gerald Melzer
+Vyhrané zápasy (%)	max	25,0 %	82	83	83	78	31	14	33
+Esa (%)	max	21,4 %	10	4	7	9	4	4	5
+Vyhrané tie breaky (%)	max	16,1 %	65	61	63	63	54	40	39
+Vyhrané turnaje	max	10,7 %	96	75	68	45	0	0	0
+Celkový počet vyhraných bodů (%)	max	7,1 %	54	54	54	53	47	46	47
+Body vyhrané na returnu (%)	max	16,1 %	40	42	42	42	36	33	34
+Počet rozbitých raket	min	3,6 %	10	15	50	69	36	98	55

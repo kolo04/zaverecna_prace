@@ -1,0 +1,12 @@
+Počet kritérií	9		Počet variant	10								
+			Varianta									
+Kritérium	Cíl	Váha	Acer Nitro	Acer Swift	Acer TravelMate	HP 14	HP ProBook	Lenovo IdeaPad	Lenovo ThinkBook	Lenovo ThinkPad	Lenovo Yoga	MSI GF63
+Cena (Kč)	min	20,0%	19 690 	15 699 	18 394 	16 714 	23 418 	19 699 	18 990 	15 987 	24 989 	16 990 
+Frekvence procesoru (GHz)	max	17,8%	3,4	1,8	3,3	2,8	0,9	1,5	0,9	2,6	3,3	2,7
+Hmotnost (kg)	min	15,6%	2,11	1,2	1,7	1,4	1,79	1,89	1,7	1,59	1,49	1,86
+Hodnocení uživatelů	max	13,3%	4,5	4,7	4,7	5	4,7	4,5	4,7	4,5	5	3,9
+Kapacita úložiště (GB)	max	11,1%	1 000 	1 000 	512 	1 000 	1 000 	512 	512 	512 	1 000 	512 
+Kvalita webkamery (p)	max	8,9%	720	720	720	720	720	1 080 	1 080 	720	1 080 	720
+Maximální výdrž baterie (h)	max	6,7%	5	12,5	9	11,25	12,25	11,5	14,43	15,3	19,33	7
+Operační paměť RAM (GB)	max	4,4%	16	16	16	16	16	16	16	8	16	16
+Úhlopříčka displeje (palce)	max	2,2%	15,6	14	15,6	14	15,6	16	16	14	14,5	15,6

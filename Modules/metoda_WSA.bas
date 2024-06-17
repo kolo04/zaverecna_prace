@@ -275,7 +275,6 @@ Sub M3_metoda_WSA()
             .VerticalAlignment = xlCenter
             .Font.Bold = True
             .WrapText = False
-            '.EntireColumn.AutoFit
             .Select
         End With
         

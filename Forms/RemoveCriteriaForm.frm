@@ -14,12 +14,11 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Private Sub UserForm_Initialize()
     
-    ' Nastav focus na ListBox
+    ' Nastavení focus na ListBox
     CriteriaListBox.SetFocus
     
-    ' Reset the size
+    ' Nastavení velikosti formuláøe
     With frm
-        ' Set the form size
         Height = 200
         Width = 269
     End With
@@ -32,10 +31,10 @@ Private Sub RemoveButton_Click()
     Dim selectedCriteria As String
     Dim ws As Worksheet
     
-    ' Nastav pracovní list, kde jsou kritéria uložena
+    ' Nastavení pracovního listu, kde jsou kritéria uložena
     Set ws = ThisWorkbook.Sheets("Vstupní data")
     
-    ' Zkontroluj, zda je vybráno kritérium
+    ' Kontrola, zda je vybráno kritérium
     If CriteriaListBox.ListIndex = -1 Then
         MsgBox "Vyberte prosím kritérium k odebrání.", vbExclamation
         Exit Sub
@@ -48,22 +47,34 @@ Private Sub RemoveButton_Click()
     selectedCriteria = CriteriaListBox.List(selectedCriteriaIndex)
     
     ' Odebrání vybraného kritéria z listu "Vstupní data"
-    ws.Unprotect "1234"
-    ws.Rows(5 + selectedCriteriaIndex).Delete
+    With ws
+        .Unprotect "1234"
+        
+        ' Vymazání øádku s indexem kritéria
+        .Rows(5 + selectedCriteriaIndex).Delete
+        
+        ' Odebrání vybraného kritéria z ListBoxu
+        CriteriaListBox.RemoveItem selectedCriteriaIndex
+        
+        ' Snížení hodnoty v buòce C2 o 1
+        .Range("C2").value = .Range("C2").value - 1
+        
+        HideButton ws, "Metoda WSA"
+        HideButton ws, "Metoda bazické varianty"
+        
+        ' Stanovit váhy lze pouze, když jsou pøítomna aspoò dvì kritéria
+        If numOfCriteria > 1 Then
+            HideButton ws, "Stanovit váhy"
+            AddButtonTo ws, ws.Range("F" & 6 + numOfCriteria), "Stanovit váhy", "MoveToM2"
+        End If
+    End With
     
-    ' Odebrání vybraného kritéria z ListBoxu
-    CriteriaListBox.RemoveItem selectedCriteriaIndex
-    
-    ' Snížení hodnoty v buòce C2 o 1
-    ws.Range("C2").value = ws.Range("C2").value - 1
-    ws.Protect "1234"
-    
-    'Pokud bude poèet položek v ListBoxu < 2, pak schovej tlaèítko
+    ' Pokud bude poèet položek v ListBoxu < 2, schování tlaèítka
     If CriteriaListBox.ListCount < 2 Then
         HideButton ws, "Stanovit váhy"
     End If
     
-    ' Zkontroluj, zda zùstal ještì nìjaký prvek v ListBoxu
+    ' Kontrola, zda zùstal ještì nìjaký prvek v ListBoxu
     If CriteriaListBox.ListCount = 0 Then
         MsgBox "Není žádné kritérium k odebrání.", vbInformation
         Me.Hide
@@ -74,5 +85,5 @@ Private Sub RemoveButton_Click()
     ' Zpráva potvrzující odebrání kritéria
     MsgBox "Kritérium '" & selectedCriteria & "' bylo úspìšnì odebráno.", vbInformation
     
+    ws.Protect "1234"
 End Sub
-

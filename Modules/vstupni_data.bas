@@ -99,7 +99,6 @@ Sub InputData()
     
 End Sub
 
-
 ' Procedura obsluhující stanovení cílù úèelových funkcí pro jednotlivá kritéria
 Sub WeightedInputData()
 
@@ -507,3 +506,4 @@ Sub RemoveCandidate()
     ' Zavolání formuláøe pro odebrání varianty
     RemoveCandidateForm.Show
 End Sub
+

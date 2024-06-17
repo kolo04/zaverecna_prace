@@ -97,8 +97,8 @@ Private Sub AddButton_Click()
         End If
     Loop Until validInput
         
-    ws.Unprotect "1234"
     ' Zapsání názvu kritéria na list jako text
+    ws.Unprotect "1234"
     ws.Cells(lastRow, 2).value = "'" & TextBox1.Text
     
     ' Aktualizace poètu kritérií z listu
@@ -139,7 +139,7 @@ Private Sub AddButton_Click()
         End If
     End If
     
-    ' Úprava šíøky sloupcù
+    ' Úprava šíøky sloupce kritérií
     AdjustColumnWidth ws, 2
     
     ThisWorkbook.Sheets("Vstupní data").Protect "1234"
@@ -159,6 +159,7 @@ Private Sub Continue_Click()
     
     ' Zavøení UserFormu
     Unload Me
+    
     ' Pøechod zpìt do Vstupní data pomocí boolean podmínky criteriaDone
     criteriaDone = True
     

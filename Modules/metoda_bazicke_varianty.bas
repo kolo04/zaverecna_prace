@@ -38,6 +38,7 @@ Sub M4_metoda_Bazicke_varianty()
     If Not wsExists Then
         Set ws = ThisWorkbook.Sheets.Add(After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.Count))
         ws.name = "Metoda bazické varianty"
+        
         ' Pøesun na novì vytvoøený list
         ws.Activate
         ws.Unprotect "1234"
@@ -94,7 +95,6 @@ Sub M4_metoda_Bazicke_varianty()
         ' Nastavení stylu bunìk váhy jako na formát "0.0 %"
         .Range(.Cells(4, 4), .Cells(4 + numOfCriteria, 4)).NumberFormat = "0.0 %"
     End With
-
     
     ' Nastavení ohranièení pro sloupce B až D v øádcích 4 až poslední kritérium
     Dim column As Range
@@ -177,6 +177,9 @@ Sub M4_metoda_Bazicke_varianty()
             .Font.Italic = True
             .EntireColumn.AutoFit
         End With
+        
+        Dim epsilon As Double
+        epsilon = 0.0000000001 ' Malé èíslo pro ošetøení dìlení 0
 
         ' Cyklus pro vypoèítání normalizované hodnoty buòky
         For i = 1 To numOfCriteria
@@ -184,9 +187,19 @@ Sub M4_metoda_Bazicke_varianty()
             
                 ' Vypoèítání normalizované hodnoty
                 If .Cells(4 + i, 3).value = "min" Then
-                    .Cells(10 + numOfCriteria + i, 4 + j).formula = "=" & .Cells(4 + i, 5 + numOfCandidates).Address(False, True) & "/" & .Cells(4 + i, 4 + j).Address(False, False)
+                    If .Cells(4 + i, 4 + j).value = 0 Then
+                        .Cells(4 + i, 4 + j).value = epsilon
+                        .Cells(10 + numOfCriteria + i, 4 + j).formula = "=" & .Cells(4 + i, 5 + numOfCandidates).Address(False, True) & "/" & .Cells(4 + i, 4 + j).Address(False, False)
+                    Else
+                        .Cells(10 + numOfCriteria + i, 4 + j).formula = "=" & .Cells(4 + i, 5 + numOfCandidates).Address(False, True) & "/" & .Cells(4 + i, 4 + j).Address(False, False)
+                    End If
                 ElseIf .Cells(4 + i, 3).value = "max" Then
-                    .Cells(10 + numOfCriteria + i, 4 + j).formula = "=" & .Cells(4 + i, 4 + j).Address(False, False) & "/" & .Cells(4 + i, 5 + numOfCandidates).Address(False, True)
+                    If .Cells(4 + i, 5 + numOfCandidates).value = 0 Then
+                        .Cells(4 + i, 5 + numOfCandidates).value = epsilon
+                        .Cells(10 + numOfCriteria + i, 4 + j).formula = "=" & .Cells(4 + i, 4 + j).Address(False, False) & "/" & .Cells(4 + i, 5 + numOfCandidates).Address(False, True)
+                    Else
+                        .Cells(10 + numOfCriteria + i, 4 + j).formula = "=" & .Cells(4 + i, 4 + j).Address(False, False) & "/" & .Cells(4 + i, 5 + numOfCandidates).Address(False, True)
+                    End If
                 End If
             Next j
         Next i

@@ -9,8 +9,6 @@ Dim cbo As Object
 ' Makro pro spouštìní Solveru
 Sub M5_Solver(ws As Worksheet, cboName As String)
 
-    Dim keyValue As String
-
     ' Získání referencí na listy
     Set ws = ws
     Set wsInput = ThisWorkbook.Sheets("Vstupní data")
@@ -23,10 +21,7 @@ Sub M5_Solver(ws As Worksheet, cboName As String)
             If cbo.ListCount > 0 Then
             
                 ' Kontrola, zda je vybrána nìjaká varianta
-                If cbo.ListIndex <> 0 Then
-                    ' Získání hodnoty vybrané v ComboBoxu a její pøevod na øetìzec
-                    selectedVariant = CStr(cbo.List(cbo.ListIndex))
-                Else
+                If cbo.ListIndex = 0 Then
                     MsgBox "Zvolte, prosím, požadované kompromisní øešení.", vbExclamation
                     Exit Sub
                 End If
@@ -41,22 +36,7 @@ Sub M5_Solver(ws As Worksheet, cboName As String)
     numOfCandidates = wsInput.Range("F2").value
     
     With ws
-        ' Nastavení popisku pro klíèovou funkci
         .Unprotect "1234"
-        .Cells(10 + numOfCriteria, 6 + numOfCandidates).value = "Klíèová funkce"
-        
-        ' Výpoèet klíèové funkce: požadované øešení musí být stejné jako øešení metody
-        keyValue = .Cells(12 + (2 * numOfCriteria), 7 + numOfCandidates).Address(True, True)
-        .Cells(10 + numOfCriteria, 7 + numOfCandidates).formula = "=IF(" & keyValue & "=""" & selectedVariant & """,1,0)"
-
-    ' Minimalizaèní funkce
-        .Cells(11 + numOfCriteria, 6 + numOfCandidates).value = "Co nejmenší:"
-        
-        .Cells(11 + numOfCriteria, 7 + numOfCandidates).Formula2 = _
-                    "=SUM(ABS(" & .Range(.Cells(5, 4), .Cells(4 + numOfCriteria, 4)).Address & _
-                    " - " & .Range(.Cells(11 + numOfCriteria, 4), .Cells(10 + (2 * numOfCriteria), 4)).Address & "))"
-        
-        .Cells(11 + numOfCriteria, 7 + numOfCandidates).NumberFormat = "0.0 %"
     
     SolverReset
     
@@ -66,9 +46,12 @@ Sub M5_Solver(ws As Worksheet, cboName As String)
             MaxMinVal:=2, _
             ValueOf:=0, _
             ByChange:=.Range(.Cells(11 + numOfCriteria, 4), .Cells(11 + (2 * numOfCriteria), 4)).Address, _
-            Engine:=3, EngineDesc:="Evolutionary"
+            Engine:=1, EngineDesc:="GRG Nonlinear"
+            'Engine:=3, EngineDesc:="Evolutionary"
             'Engine:=2, EngineDesc:="Simplex LP"
-            'Engine:=1, EngineDesc:="GRG Nonlinear"
+            
+    ' Nastavení maximálního èasu pro všechny metody na 180 sekund a využití více poèáteèních bodù gradientní metody
+    SolverOptions MaxTime:=180, MultiStart:=True
             
     ' Podmínky Solveru:
 
@@ -78,7 +61,9 @@ Sub M5_Solver(ws As Worksheet, cboName As String)
                     FormulaText:="1"
                     
         ' Celkový souèet vah je roven souètu (100%)
-        SolverAdd cellRef:=.Cells(11 + (2 * numOfCriteria), 4).Address, Relation:=2, FormulaText:="=SUM(" & .Range(.Cells(11 + numOfCriteria, 4), .Cells(10 + (2 * numOfCriteria), 4)).Address & ")"
+        SolverAdd cellRef:=.Cells(11 + (2 * numOfCriteria), 4).Address, Relation:=2, _
+                    FormulaText:="=SUM(" & .Range(.Cells(11 + numOfCriteria, 4), _
+                                                  .Cells(10 + (2 * numOfCriteria), 4)).Address & ")"
 
         ' Celkový souèet vah musí být roven 1 (100%)
         SolverAdd cellRef:=.Cells(11 + (2 * numOfCriteria), 4), _
@@ -98,7 +83,6 @@ Sub M5_Solver(ws As Worksheet, cboName As String)
 
     End With
 End Sub
-
 
 Function AddComboBox(ws As Worksheet, name As String, targetCell As Range, optionsRange As Range, macroName As String) As Variant
     Dim cbo As Shape
@@ -146,7 +130,10 @@ Function AddComboBox(ws As Worksheet, name As String, targetCell As Range, optio
     cbo.OnAction = macroName
 End Function
 
+' Procedura obnovující pùvodní váhy kritérií, pokud se zmìní hodnota ComboBoxu
 Sub newBestCandidate_Change(ws As Worksheet, newBestCandidateName As String)
+
+    Dim keyValue As String
     
     ' Získání referencí na listy
     Set ws = ws
@@ -157,21 +144,43 @@ Sub newBestCandidate_Change(ws As Worksheet, newBestCandidateName As String)
     ' Získání hodnoty vybrané v ComboBoxu
     For Each cbo In ws.DropDowns
         If cbo.name = newBestCandidateName Then
+        
             ' Kontrola, zda je ComboBox obsahuje nìjaké varianty
             If cbo.ListCount > 0 Then
+            
                 ' Kontrola, zda je vybrána nìjaká varianta
                 If cbo.ListIndex <> 0 Then
-                    ws.Unprotect "1234"
-                    ws.Range(ws.Cells(11 + numOfCriteria, 4), ws.Cells(10 + (2 * numOfCriteria), 4)).formula _
-                        = wsInput.Range(wsInput.Cells(5, 4), wsInput.Cells(4 + numOfCriteria, 4)).value
-                    ws.Protect "1234"
-                    Exit Sub
+                
+                    ' Získání hodnoty vybrané v ComboBoxu a její pøevod na øetìzec
+                    selectedVariant = CStr(cbo.List(cbo.ListIndex))
+                
+                    With ws
+                        .Unprotect "1234"
+                        .Range(ws.Cells(11 + numOfCriteria, 4), .Cells(10 + (2 * numOfCriteria), 4)).formula _
+                            = wsInput.Range(wsInput.Cells(5, 4), wsInput.Cells(4 + numOfCriteria, 4)).value
+                        
+                        ' Nastavení popisku pro klíèovou funkci
+                        .Cells(10 + numOfCriteria, 6 + numOfCandidates).value = "Klíèová funkce"
+                        
+                        ' Výpoèet klíèové funkce: požadované øešení musí být stejné jako øešení metody
+                        keyValue = .Cells(12 + (2 * numOfCriteria), 7 + numOfCandidates).Address(True, True)
+                        .Cells(10 + numOfCriteria, 7 + numOfCandidates).formula = "=IF(" & keyValue & "=""" & selectedVariant & """,1,0)"
+                
+                        ' Minimalizaèní funkce
+                        .Cells(11 + numOfCriteria, 6 + numOfCandidates).value = "Co nejmenší:"
+                        
+                        .Cells(11 + numOfCriteria, 7 + numOfCandidates).Formula2 = _
+                                    "=SUM(ABS(" & .Range(.Cells(5, 4), .Cells(4 + numOfCriteria, 4)).Address & _
+                                    " - " & .Range(.Cells(11 + numOfCriteria, 4), .Cells(10 + (2 * numOfCriteria), 4)).Address & "))"
+                        
+                        .Cells(11 + numOfCriteria, 7 + numOfCandidates).NumberFormat = "0.0 %"
+                        .Protect "1234"
+                        Exit Sub
                 End If
             Else
+                MsgBox "Není k dispozici žádná varianta k výbìru.", vbExclamation
                 Exit Sub
             End If
         End If
     Next cbo
 End Sub
-
-

@@ -40,6 +40,7 @@ Private Sub UserForm_Initialize()
     
 End Sub
 
+' Procedura ovládající tlaèítko Pøidat variantu, reaguje na stisknutí tlaèítka
 Private Sub AddButton_Click()
 
 ' Pøidání nové varianty na list "Vstupní data"
@@ -61,7 +62,9 @@ Private Sub AddButton_Click()
             ThisWorkbook.Sheets("Vstupní data").Protect "1234"
             Exit Sub
         Else
+            ' Znovunaètení aktuálního listu
             Set ws = ThisWorkbook.Sheets("Vstupní data")
+            
             ' Získání aktuálního poètu variant
             numOfCandidates = ws.Range("F2").value
         
@@ -148,14 +151,17 @@ Private Sub AddButton_Click()
         End With
     End With
     
+    ' Úprava šíøky novì pøidaného sloupce
     AdjustColumnWidth ws, 4 + numOfCandidates
     
     ThisWorkbook.Sheets("Vstupní data").Protect "1234"
 
 End Sub
 
+' Procedura obsluhující stisknutí tlaèítka pokraèovat
 Private Sub Continue_Click()
     Set ws = ThisWorkbook.Sheets("Vstupní data")
+    
     ' Kontrola poètu variant, spodní hranice 2
     If ws.Range("F2").value < 2 Then
         MsgBox "Pøi rozhodování bychom mìli zohledòovat minimálnì 2 varianty.", vbExclamation
@@ -165,10 +171,10 @@ Private Sub Continue_Click()
     
     ' Zavøení UserFormu
     Unload Me
+    
     ' Pøechod zpìt do Vstupní data pomocí boolean podmínky candidatesDone
     candidatesDone = True
     
     ThisWorkbook.Sheets("Vstupní data").Protect "1234"
     
 End Sub
-
