@@ -30,6 +30,7 @@ Private Sub RemoveButton_Click()
     Dim selectedCriteriaIndex As Integer
     Dim selectedCriteria As String
     Dim ws As Worksheet
+    Dim numOfCriteria As Integer
     
     ' Nastavení pracovního listu, kde jsou kritéria uložena
     Set ws = ThisWorkbook.Sheets("Vstupní data")
@@ -59,13 +60,18 @@ Private Sub RemoveButton_Click()
         ' Snížení hodnoty v buòce C2 o 1
         .Range("C2").value = .Range("C2").value - 1
         
+        HideButton ws, "Pokraèovat"
+        HideButton ws, "Nahrát cíle"
         HideButton ws, "Metoda WSA"
         HideButton ws, "Metoda bazické varianty"
+        
+        ' Získání poètu kritérií
+        numOfCriteria = ws.Range("C2").value
         
         ' Stanovit váhy lze pouze, když jsou pøítomna aspoò dvì kritéria
         If numOfCriteria > 1 Then
             HideButton ws, "Stanovit váhy"
-            AddButtonTo ws, ws.Range("F" & 6 + numOfCriteria), "Stanovit váhy", "MoveToM2"
+            AddButtonTo ws, ws.Range("F" & 6 + numOfCriteria), "Stanovit váhy", "SetWeights"
         End If
     End With
     

@@ -4,6 +4,13 @@ Dim wsInput As Worksheet
 Dim wsOutput As Worksheet
 Dim numOfCriteria As Integer
 
+Sub SetWeights()
+
+    ' Otevøe formuláø s možností výbìru metody pro zadání vah
+    WeightsForm.Show
+    
+End Sub
+
 ' Procedura obsluhující metodu poøadí
 Sub MoveToM2()
 
@@ -131,7 +138,7 @@ Sub OrderList()
         HideButton ws, "Pokraèovat"
         
         ' Pøidání tlaèítka "Vypoèítat váhu"
-        AddButtonTo ws, .Range("G9"), "Vypoèítat váhu", "CountWeight"
+        AddButtonTo ws, .Range("G9"), "Vypoèítat váhy", "CountWeight"
         
         ' Aktivace buòky s rozevíracím seznamem
         .Range(.Cells(3, 3), .Cells(2 + numOfCriteria, 3)).Locked = False
@@ -183,7 +190,7 @@ Sub CountWeight()
             Exit Sub
             
         ' Poøadí již evidáno
-        ElseIf ranks.Exists(value) Then
+        ElseIf ranks.exists(value) Then
             ranks(value) = ranks(value) + 1
             
         ' Pøidání nové hodnoty poøadí
@@ -196,7 +203,7 @@ Sub CountWeight()
     Next i
     
     ' Kontrola, zda je jednièka ve sloupci poøadí
-    If Not ranks.Exists(1) Then
+    If Not ranks.exists(1) Then
         MsgBox "Poøadí musí zaèínat od 1.", vbExclamation
         Exit Sub
     End If
@@ -208,7 +215,7 @@ Sub CountWeight()
     
     ' Pøidání chybìjících poøadí pro rozdìlení bodù
     For i = 1 To numOfCriteria
-        If Not ranks.Exists(i) Then
+        If Not ranks.exists(i) Then
             filledRanks.Add i
         End If
     Next i
@@ -298,18 +305,104 @@ Sub CountWeight()
         AdjustColumnWidth ws, .Range(.Columns(4), .Columns(5))
     End With
     
-    HideButton ws, "Vypoèítat váhu"
+    HideButton ws, "Vypoèítat váhy"
     
     ' Vložení popisku a vah kritérií z listu Poøadí kritérií do bunìk D5:D (5 + numOfCriteria)
     wsOutput.Unprotect "1234"
-    wsOutput.Range("D4").value = "Váha"
     wsOutput.Range("D5:D" & 4 + numOfCriteria).value = ws.Range("E3:E" & 2 + numOfCriteria).value
-    HideButton wsOutput, "Stanovit váhu"
+    HideButton wsOutput, "Stanovit váhy"
     AdjustColumnWidth wsOutput, wsOutput.Range(wsOutput.Columns(2), wsOutput.Columns(4))
     wsOutput.Protect "1234"
     
     ' Pøidání tlaèítka pro návrat na vstupní data
-    AddButtonTo ws, ws.Range("G9"), "Pokraèovat", "WeightedInputData"
+    AddButtonTo ws, ws.Range("G9"), "Pokraèovat", "SetObjectives"
     
     ws.Protect "1234"
+End Sub
+
+Sub UploadWeights()
+    Dim weights As Range
+    Dim sumWeights As Double
+    Dim Objectives As Range
+    Dim subject As String
+
+    ' Odkaz na list "Vstupní data"
+    Set ws = ThisWorkbook.Sheets("Vstupní data")
+    
+    ' Naètení poètu kritérií
+    numOfCriteria = ws.Range("C2").value
+
+    ' Nastavení cílové buòky (zaèátek v D5 + poèet kritérií)
+    Set weights = ws.Range(ws.Cells(5, 4), ws.Cells(4 + numOfCriteria, 4))
+
+    ' Pøedmìt pro zobrazení v InputBoxu
+    subject = "váhy"
+    
+    ' Volání samostatné procedury pro nahrávání dat
+    Call UploadData(weights, subject)
+    
+ ' Kontrola, zda jsou všechny váhy vyplnìné
+    If CheckFilledCells(weights, "number") Then
+        
+        ' Kontrola, zda souèet vah je roven 100%
+        ' Získání souètu vah
+        sumWeights = Application.WorksheetFunction.Sum(weights)
+
+        ' Zkontroluj, zda je souèet roven 1 (100 %)
+        If Round(sumWeights, 4) = 1 Then ' Používáme zaokrouhlení pro pøesnost
+        ' Schování tlaèítka, pokud existuje
+            HideButton ws, "Stanovit váhy"
+            
+            'Kontrola, zda jsou vyplnìny cíle
+            Set Objectives = ws.Range(ws.Cells(5, 3), ws.Cells(4 + numOfCriteria, 3))
+            
+            ws.Unprotect "1234"
+            
+            If CheckFilledCells(Objectives, "text") Then
+                Call CheckObjectives(Objectives, ws)
+            Else:
+                ' Pøidání tlaèítka pro stanovení cílù
+                AddButtonTo ws, ws.Range("F" & 6 + numOfCriteria), "Stanovit cíle", "SetObjectives"
+            End If
+        Else
+            ' Pokud souèet vah není roven 100%, tlaèítko zùstává
+            MsgBox "Souèet vah není roven 100%! Aktuální souèet: " & Format(sumWeights * 100, "0.00") & "%.", vbExclamation
+        End If
+    Else
+        ' Pokud nejsou všechny váhy vyplnìné, tlaèítko zùstává
+        MsgBox "Vkládané váhy nejsou vyplnìné nebo nejsou ve tvaru èísla." & vbCrLf & "Nahrávání bylo zrušeno.", vbExclamation
+        ws.Unprotect "1234"
+        ws.Range(ws.Cells(5, 4), ws.Cells(4 + numOfCriteria, 4)).Clear
+    End If
+    
+    With ws
+    
+        .Unprotect "1234"
+        ' Formátování záhlaví B4:D4
+        With .Range("B4:D4")
+            ' Tuènì a zarovnání na støed
+            .Font.Bold = True
+            .HorizontalAlignment = xlCenter
+        
+            ' Nastavení ohranièení
+            With .Borders(xlEdgeBottom)
+                .LineStyle = xlContinuous
+                .ColorIndex = 0
+                .TintAndShade = 0
+                .Weight = xlThin
+            End With
+        End With
+        
+        ' Zarovnání bunìk C4:C (4 + numOfCriteria) na støed
+        .Range("C4:C" & 4 + numOfCriteria).HorizontalAlignment = xlCenter
+        
+        ' Nastavení stylu bunìk D4:D (4 + numOfCriteria) jako "Percent" s formátem "0.0 %"
+        .Range("D4:D" & 4 + numOfCriteria).NumberFormat = "0.0 %"
+        
+        ' Úprava šíøky sloupcù
+        AdjustColumnWidth ws, .Range(.Columns(2), .Columns(3))
+        
+        .Protect "1234"
+    End With
+
 End Sub

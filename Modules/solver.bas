@@ -38,20 +38,19 @@ Sub M5_Solver(ws As Worksheet, cboName As String)
     With ws
         .Unprotect "1234"
     
-    SolverReset
-    
     ' Konfigurace Solveru:
-    
-    SolverOk SetCell:=.Cells(11 + numOfCriteria, 7 + numOfCandidates).Address, _
-            MaxMinVal:=2, _
-            ValueOf:=0, _
-            ByChange:=.Range(.Cells(11 + numOfCriteria, 4), .Cells(11 + (2 * numOfCriteria), 4)).Address, _
-            Engine:=1, EngineDesc:="GRG Nonlinear"
-            'Engine:=3, EngineDesc:="Evolutionary"
-            'Engine:=2, EngineDesc:="Simplex LP"
-            
-    ' Nastavení maximálního èasu pro všechny metody na 180 sekund a využití více poèáteèních bodù gradientní metody
-    SolverOptions MaxTime:=180, MultiStart:=True
+        SolverReset
+        
+        SolverOk SetCell:=.Cells(11 + numOfCriteria, 7 + numOfCandidates).Address, _
+                MaxMinVal:=2, _
+                ValueOf:=0, _
+                ByChange:=.Range(.Cells(11 + numOfCriteria, 4), .Cells(11 + (2 * numOfCriteria), 4)).Address, _
+                Engine:=1, EngineDesc:="GRG Nonlinear"
+                'Engine:=3, EngineDesc:="Evolutionary"
+                'Engine:=2, EngineDesc:="Simplex LP"
+                
+        ' Nastavení maximálního èasu pro všechny metody na 180 sekund a využití více poèáteèních bodù gradientní metody
+        SolverOptions MaxTime:=180, MultiStart:=True
             
     ' Podmínky Solveru:
 
@@ -75,11 +74,11 @@ Sub M5_Solver(ws As Worksheet, cboName As String)
                     Relation:=2, _
                     FormulaText:="=1"
 
-    SolverSolve
-    
-    AdjustColumnWidth ws, 7 + numOfCandidates
-    
-    .Protect "1234"
+        SolverSolve
+        
+        AdjustColumnWidth ws, 7 + numOfCandidates
+        
+        .Protect "1234"
 
     End With
 End Sub
@@ -140,6 +139,7 @@ Sub newBestCandidate_Change(ws As Worksheet, newBestCandidateName As String)
     Set wsInput = ThisWorkbook.Sheets("Vstupní data")
     
     numOfCriteria = wsInput.Range("C2").value
+    numOfCandidates = wsInput.Range("F2").value
     
     ' Získání hodnoty vybrané v ComboBoxu
     For Each cbo In ws.DropDowns
@@ -176,6 +176,7 @@ Sub newBestCandidate_Change(ws As Worksheet, newBestCandidateName As String)
                         .Cells(11 + numOfCriteria, 7 + numOfCandidates).NumberFormat = "0.0 %"
                         .Protect "1234"
                         Exit Sub
+                    End With
                 End If
             Else
                 MsgBox "Není k dispozici žádná varianta k výbìru.", vbExclamation

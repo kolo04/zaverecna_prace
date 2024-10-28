@@ -12,7 +12,7 @@ Sub M3_metoda_WSA()
     Application.ScreenUpdating = False
     
     ' Volání kontroly vyplnìných hodnot
-    Call CheckFilledCells
+    Call CheckFilledData
 
 ' Ovìøení existence listu "Metoda WSA"
     Dim wsExists As Boolean

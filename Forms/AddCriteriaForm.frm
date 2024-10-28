@@ -1,10 +1,10 @@
 VERSION 5.00
 Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} AddCriteriaForm 
    Caption         =   "Formuláø pro pøidání kritérií"
-   ClientHeight    =   2640
+   ClientHeight    =   3048
    ClientLeft      =   96
    ClientTop       =   228
-   ClientWidth     =   4128
+   ClientWidth     =   5160
    OleObjectBlob   =   "AddCriteriaForm.frx":0000
    StartUpPosition =   1  'CenterOwner
 End
@@ -43,17 +43,16 @@ Private Sub UserForm_Initialize()
     
     ThisWorkbook.Sheets("Vstupní data").Protect "1234"
     
-    ' Reset the size
+    ' Nastavení velikosti (pùvodnì 160x269)
     With frm
-        ' Set the form size
-        Height = 160
+        Height = 185
         Width = 269
     End With
     
 End Sub
 
 ' Procedura ovládající tlaèítko Pøidat kritérium, reaguje na stisknutí tlaèítka
-Private Sub AddButton_Click()
+Private Sub Add_Click()
 
 ' Pøidání nového kritéria na list Vstupní data
     Set ws = ThisWorkbook.Sheets("Vstupní data")
@@ -108,10 +107,105 @@ Private Sub AddButton_Click()
     ' Vyprázdnìní pole pro název kritéria
     TextBox1.Text = ""
     
+    Call Update
+End Sub
+
+' Skript umožòující nahrát kritéria z vybrané oblasti
+Private Sub Upload_Click()
+    Dim rng As Range
+    Dim subject As String
+    Dim criteriaRange As Range
+    Dim numOfRows As Integer
+    Dim duplicateFound As Boolean
+    Dim cell As Range
+    Dim UniqueValues As Object
+
+    ' Odkaz na list "Vstupní data"
+    Set ws = ThisWorkbook.Sheets("Vstupní data")
+
+    ' Získání aktuálního poètu kritérií z buòky C2
+    Set criteriaRange = ws.Range("C2")
+    numOfCriteria = criteriaRange.value
+
+    ' Nastavení cílové buòky (zaèátek v B5 + poèet kritérií)
+    Set rng = ws.Cells(5 + numOfCriteria, 2)
+
+    ' Pøedmìt pro zobrazení v InputBoxu
+    subject = "kritéria"
+    
+    ' Volání samostatné procedury pro nahrávání dat a získání poètu vložených øádkù
+    numOfRows = UploadData(rng, subject)
+
+    ' Ovìøení, zda došlo k úspìšnému nahrání dat
+    If numOfRows > 0 Then
+        ' Slovník pro kontrolu unikátních hodnot
+        Set UniqueValues = CreateObject("Scripting.Dictionary")
+        
+        ' Pomocná promìnná pro kontrolu duplicit
+        duplicateFound = False
+        
+        ' Kontrola unikátnosti novì nahraných kritérií
+        For Each cell In ws.Range(ws.Cells(5 + numOfCriteria, 2), ws.Cells(4 + numOfCriteria + numOfRows, 2))
+            If cell.value <> "" Then
+                
+                ' Kontrola existujících kritérií (pokud nìjaká existují)
+                If numOfCriteria > 0 Then
+                    If Not IsUniqueValue(ws.Range("B5:B" & 4 + numOfCriteria), cell.value) Then
+                        duplicateFound = True
+                        Exit For
+                    End If
+                End If
+                
+                ' Kontrola duplicit v aktuálním slovníku
+                If UniqueValues.exists(cell.value) Then
+                    duplicateFound = True
+                    Exit For
+                End If
+                
+                ' Pøidání hodnoty do slovníku
+                UniqueValues.Add cell.value, True
+            End If
+        Next cell
+
+        ' Zpracování výsledkù kontroly duplicit
+        If duplicateFound Then
+            MsgBox "Vkládaná kritéria musí být unikátní! Nahrávání bylo zrušeno.", vbExclamation
+            ws.Unprotect "1234"
+            ws.Range(ws.Cells(5 + numOfCriteria, 2), ws.Cells(4 + numOfCriteria + numOfRows, 2)).Clear
+        Else
+            ' Aktualizace poètu kritérií o poèet vložených øádkù
+            ws.Unprotect "1234"
+            criteriaRange.value = numOfCriteria + numOfRows
+        End If
+    End If
+
+    ' Uzamknutí listu na konci procedury
+    ws.Protect "1234"
+
+    Call Update
+    
+    ' Pøidání tlaèítka pro nový pøíklad
+    Call AddRestartButton
+    
+    Unload Me
+End Sub
+
+' Spoleèný skript pro oba zpùsoby vkládání kritérií, obslouží potøebné úpravy formuláøe i listu
+Private Sub Update()
+    
+    Set ws = ThisWorkbook.Sheets("Vstupní data")
+    ws.Activate
+    
+    ws.Unprotect "1234"
+    
     ' Aktivace TextBoxu pro další vstup
     TextBox1.SetFocus
     
+    ' Zrušení všech tlaèítek na listu
     ws.Buttons.Delete
+    
+    ' Získání aktuálního poètu kritérií
+    numOfCriteria = ws.Range("C2").value
         
     ' Pøidání tlaèítka pro pøidání dalších kritérií
     AddButtonTo ws, ws.Range("B" & 6 + numOfCriteria), "Pøidat kritérium", "AddMoreCriteria"
@@ -123,7 +217,7 @@ Private Sub AddButton_Click()
     
     ' Stanovit váhy lze pouze, když jsou pøítomna aspoò dvì kritéria
     If numOfCriteria > 1 Then
-        AddButtonTo ws, ws.Range("F" & 6 + numOfCriteria), "Stanovit váhy", "MoveToM2"
+        AddButtonTo ws, ws.Range("F" & 6 + numOfCriteria), "Stanovit váhy", "SetWeights"
     End If
     
     ' Získání aktuálního poètu variant
@@ -143,6 +237,9 @@ Private Sub AddButton_Click()
     AdjustColumnWidth ws, 2
     
     ThisWorkbook.Sheets("Vstupní data").Protect "1234"
+    
+    ' Aktivace TextBoxu pro další vstup
+    TextBox1.SetFocus
 
 End Sub
 

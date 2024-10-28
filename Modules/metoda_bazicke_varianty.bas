@@ -12,7 +12,7 @@ Sub M4_metoda_Bazicke_varianty()
     Application.ScreenUpdating = False
     
     ' Volání kontroly vyplnìných hodnot
-    Call CheckFilledCells
+    Call CheckFilledData
     
 ' Ovìøení existence listu "Metoda bazické varianty"
     Dim wsExists As Boolean

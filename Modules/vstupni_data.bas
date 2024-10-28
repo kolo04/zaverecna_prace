@@ -6,11 +6,18 @@ Dim numOfCriteria As Integer
 Dim numOfCandidates As Integer
 Dim criteriaDone As Boolean
 
+' Globální promìnná pro sledování stavu ukonèení úprav hodnot
+Dim cancelEditing As Boolean
+
 ' Pøi otevøení souboru je automaticky spuštìna tato procedura
-Sub auto_open()
+Sub Auto_Open()
     
-    ' Zavolání procedury Vstupni_data
-    Call InputData
+    ' Zobrazení vısledkù procedury a po kompletním naètení procedury
+    Application.ScreenUpdating = False
+    
+    ' Zavolání formuláøe pro vıbìr metody zadání vstupních dat
+    EntryForm.Show
+    
 End Sub
 
 ' Úvodní procedura, která je automaticky spuštìna po otevøení
@@ -63,7 +70,7 @@ Sub InputData()
                 
         ' Tuèné písmo pro poèet kritérií
         .Range("B2").Font.Bold = True
-        .Range("B4").Font.Bold = True
+        .Range("B4:D4").Font.Bold = True
         
         ' Úprava šíøky sloupcù (Autofit na minimálnì 80px)
         AdjustColumnWidth ws, 2
@@ -85,6 +92,9 @@ Sub InputData()
             
             .Unprotect "1234"
             
+            ' Pøidání pro novı pøíklad
+            Call AddRestartButton
+            
             ' Získání poètu kritérií
             numOfCriteria = .Range("C2").value
             
@@ -99,81 +109,13 @@ Sub InputData()
     
 End Sub
 
-' Procedura obsluhující stanovení cílù úèelovıch funkcí pro jednotlivá kritéria
-Sub WeightedInputData()
-
-    Application.ScreenUpdating = False
-    
-    ' Definice pracovního listu pro vstupní data
-    Set wsInput = ThisWorkbook.Sheets("Poøadí kritérií")
-    Set ws = ThisWorkbook.Sheets("Vstupní data")
-        
-    With ws
-        .Activate
-        .Unprotect "1234"
-        
-        ' Získání poètu kritérií
-        numOfCriteria = .Range("C2").value
-        
-        ' Nastavení textu "Cíl" do buòky C4
-        .Range("C4").value = "Cíl"
-        
-        ' Vytvoøení rozevíracího seznamu s monostmi "min" a "max" pro kadou buòku v rozsahu C4 a C(4 + numOfCriteria)
-        Dim criteriaRange As Range
-        Dim options As Variant
-        options = Array("min", "max")
-        
-        Set criteriaRange = .Range(.Cells(5, 3), .Cells(5 + numOfCriteria - 1, 3))
-        For Each cell In criteriaRange
-            With cell.Validation
-                .Delete
-                .Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, Operator:=xlBetween, Formula1:=Join(options, ",")
-            End With
-            ' Nastavení popisku "Vyberte" pro kadou buòku
-            cell.value = "Vyberte"
-            cell.Locked = False
-        Next cell
-        
-        ' Formátování záhlaví B4:D4
-        With .Range("B4:D4")
-            ' Tuènì a zarovnání na støed
-            .Font.Bold = True
-            .HorizontalAlignment = xlCenter
-        
-            ' Nastavení ohranièení
-            With .Borders(xlEdgeBottom)
-                .LineStyle = xlContinuous
-                .ColorIndex = 0
-                .TintAndShade = 0
-                .Weight = xlThin
-            End With
-        End With
-    
-        ' Zarovnání bunìk C4:C (4 + numOfCriteria) na støed
-        .Range("C4:C" & 4 + numOfCriteria).HorizontalAlignment = xlCenter
-        
-        ' Nastavení stylu bunìk D4:D (4 + numOfCriteria) jako "Percent" s formátem "0.0 %"
-        .Range("D4:D" & 4 + numOfCriteria).NumberFormat = "0.0 %"
-        
-        ' Úprava šíøky sloupcù
-        AdjustColumnWidth ws, .Range(.Columns(2), .Columns(3))
-        
-        .Cells(5, 3).Select
-    End With
-    
-    HideButton ws, "Stanovit váhy"
-    
-    ' Pøidání tlaèítka pro návrat na vstupní data
-    AddButtonTo ws, ws.Range("F" & 6 + numOfCriteria), "Pokraèovat", "Candidates"
-    
-    ws.Protect "1234"
-    
-End Sub
-
 ' Procedura obsluhující zavolání pøidávání variant a pøidání tlaèítka "Pokraèovat"
 ' pro pøechod na vyplnìní hodnot tabulky
 Sub Candidates()
     Set ws = ThisWorkbook.Sheets("Vstupní data")
+    
+    ' Získání poètu kritérií
+    numOfCriteria = ws.Range("C2").value
 
     ' Ovìøení, zda jsou všechny cíle vyplnìny
     Dim i As Integer
@@ -274,12 +216,20 @@ Sub FillData()
         ' Nastavení rozsahu bunìk pro zadání hodnot kritérií a variant
         Set cellRange = ws.Range(ws.Cells(5, 5), ws.Cells(4 + numOfCriteria, 4 + numOfCandidates))
         
+        ' Inicializace promìnné pro sledování stavu
+        cancelEditing = False
+        
         ' Cyklus pro zadání hodnot kritérií a variant
         For Each cell In cellRange
             ' Kontrola, zda je buòka prázdná
             If IsEmpty(cell) Then
                 ' Zavolání procedury FillDataForm pouze pro prázdné buòky
                 FillDataForm cell
+                
+                ' Kontrola, zda došlo k zrušení procesu
+                If cancelEditing Then
+                    Exit Sub
+                End If
             End If
         Next cell
 
@@ -293,7 +243,10 @@ Sub FillData()
             AddButtonTo ws, ws.Range("F" & 6 + numOfCriteria), "Upravit hodnoty", "EditCellValue"
         Else
             ' Pøidání tlaèítka pro vyplnìní dat
-            AddButtonTo ws, ws.Range("F" & 6 + numOfCriteria), "Pokraèovat", "FillData"
+            AddButtonTo ws, ws.Range("F" & 6 + numOfCriteria), "Vloit hodnoty", "FillData"
+            
+            ' Pøidání tlaèítka pro nahrání dat
+            AddButtonTo ws, ws.Range("F" & 9 + numOfCriteria), "Nahrát hodnoty", "UploadDataBlock"
         End If
         
         ' Pøidání tlaèítka pro spuštìní metody WSA
@@ -309,88 +262,81 @@ End Sub
 ' Procedura pro naplnìní buòky, kterou procedura dostane formou parametru
 Sub FillDataForm(cellRef As Variant)
     Dim cell As Range
-    Dim criteriaNames() As Variant
-    Dim variantNames() As Variant
+    Dim criteriaName As String
+    Dim variantName As String
     Dim inputVal As Variant
     Dim validInput As Boolean
     Dim convertedVal As Double
-
+    
     Set ws = ThisWorkbook.Sheets("Vstupní data")
     
     ' Pøetypujeme referenci na buòku na objekt typu Range
     Set cell = cellRef
-
-    ' Získání názvu kritéria
-    criteriaName = ws.Cells(cell.Row, 2).value
     
-    ' Získání názvu varianty
+    ' Získání poètu kritérií a variant pro urèení rozsahu oblastí
+    numOfCriteria = ws.Range("C2").value
+    numOfCandidates = ws.Range("F2").value
+    
+    ' Získání názvu kritéria a varianty
+    criteriaName = ws.Cells(cell.Row, 2).value
     variantName = ws.Cells(4, cell.column).value
     
-    ' Oznaèení buòky pro zadání hodnoty
+    ' Oznaèení buòky pro zadání hodnoty a zobrazení aktuální hodnoty
     cell.Select
-    
     Do
-        ' Kontrola, zda buòka obsahuje ji hodnotu
+        ' Pokud má buòka ji hodnotu, nabídneme ji uivateli ke zmìnì
         If Not IsEmpty(cell.value) Then
-            ' Pokud buòka ji obsahuje hodnotu, nabídne se monost její úpravy
             inputVal = InputBox("Aktuální hodnota pro kritérium '" & criteriaName & "' a variantu '" & variantName & "' je: " & _
                         cell.value & vbCrLf & "Zadejte novou hodnotu nebo kliknìte na OK pro ponechání stávající hodnoty:", _
                         "Hodnota pro kritérium a variantu", cell.value)
-    
         Else
-            ' Pokud buòka neobsahuje hodnotu, standardní postup zadávání nové hodnoty
-            inputVal = InputBox("Zadejte hodnotu pro kritérium '" & criteriaName & "' a variantu '" & variantName & "':", _
-            "Hodnota pro kritérium a variantu")
+            inputVal = InputBox("Zadejte hodnotu pro kritérium '" & criteriaName & "' a variantu '" & variantName & "':")
         End If
-        
-        ' Kontrola, zda uivatel klikl na Cancel
+
+        ' Pokud uivatel klikne na Cancel, ukonèíme proceduru
         If inputVal = "" Then
             MsgBox "Zadání bylo zrušeno.", vbInformation
+            cancelEditing = True  ' Nastavení Boolean promìnné pro monost ukonèení zadávání
             ws.Protect "1234"
-            End
+            Exit Sub
         End If
-        
-        ' Pokus o pøevod zadané hodnoty na èíslo
+
+        ' Ovìøení, zda je zadaná hodnota èíselná
         If IsNumeric(inputVal) Then
-            ' Pøevod na èíslo (Double)
             convertedVal = CDbl(inputVal)
-            
-            ' Uloení hodnoty do buòky
             ws.Unprotect "1234"
             cell.value = convertedVal
-            'Nastavení èíselného formátu buòky
+            ' Nastavení èíselného formátu buòky
             If cell.value = 0 Then
                 cell.NumberFormat = "0"
             ElseIf Int(cell.value) = cell.value Then
-                ' Pøeformátování èísla pomocí oddìlovaèe tisícù
                 cell.NumberFormat = "#,##0"
             Else
-                ' Pøeformátování èísla na dvì desetinná místa
                 cell.NumberFormat = "0.0#"
             End If
-            
             ws.Protect "1234"
-            validInput = True ' Platnı vstup
+            validInput = True
         Else
-            ' Hodnota není èíslo, zobrazení chybové zprávy a cyklus pokraèuje
             MsgBox "Zadávejte, prosím, pouze èíselné hodnoty." & vbCrLf & _
             "V pøípadì kritéria 'ano/ne' vkládejte hodnoty 1 pro 'ano' a 0 pro 'ne'.", vbExclamation
             validInput = False
         End If
+        
     Loop Until validInput
-    
 End Sub
 
 ' Procedura kontrolující, zda jsou hodnoty tabulky vyplnìny
-Sub CheckFilledCells()
+Sub CheckFilledData()
+    Dim cell As Range
+
     ' Nastavení pracovního listu
     Set ws = ThisWorkbook.Sheets("Vstupní data")
 
-    ' Získáme poèet kritérií a poèet variant
+    ' Získání poètu kritérií a poèet variant
     numOfCriteria = ws.Range("C2").value
     numOfCandidates = ws.Range("F2").value
-    
-   ' Procházení všech bunìk v daném rozsahu
+
+    ' Procházení všech bunìk v daném rozsahu
     For j = 1 To numOfCandidates
         For i = 1 To numOfCriteria
             ' Nastavení buòky
@@ -398,37 +344,76 @@ Sub CheckFilledCells()
             
             ' Kontrola, zda je buòka prázdná
             If IsEmpty(cell) Then
-                ' Zavolání procedury FillDataForm pro prázdné buòky
+                ' Upozornìní uivatele na prázdnou buòku
+                MsgBox "Buòka " & cell.Address & " je prázdná. Prosím, vyplòte ji.", vbExclamation
+
+                ' Zavolání procedury FillDataForm pro vyplnìní buòky
                 FillDataForm cell
                 
-                ' Pokud najde prázdnou buòku, ukonèí kontrolu
+                ' Po nalezení chyby ukonèíme kontrolu
+                Exit Sub
+            ' Kontrola, zda buòka neobsahuje èíslo
+            ElseIf Not IsNumeric(cell.value) Then
+                ' Upozornìní uivatele na neèíselnou hodnotu
+                MsgBox "Buòka " & cell.Address & " obsahuje neèíselnou hodnotu." & vbCrLf & _
+                "V pøípadì kritéria 'ano/ne' vkládejte hodnoty 1 pro 'ano' a 0 pro 'ne'.", vbExclamation
+
+                ' Zavolání procedury FillDataForm pro opravu hodnoty
+                FillDataForm cell
+                
+                ' Po nalezení chyby ukonèíme kontrolu
                 Exit Sub
             End If
         Next i
     Next j
+
 End Sub
 
-' Kód pro vytvoøení formuláøe, kterı umoní uivateli vybrat buòku
+' Kód pro vytvoøení formuláøe, kterı umoní uivateli upravit buòku
 Sub EditCellValue()
     Dim selectedRange As Range
     Dim cell As Range
+    
+    ' Nastavení pracovního listu
+    Set ws = ThisWorkbook.Sheets("Vstupní data")
+
+    ' Získání poètu kritérií a poètu variant
+    numOfCriteria = ws.Range("C2").value
+    numOfCandidates = ws.Range("F2").value
     
     ' Umoní uivateli vybrat buòku/buòky
     On Error Resume Next
     Set selectedRange = Application.InputBox("Vyberte buòku (buòky), kterou (které) chcete upravit:", Type:=8)
     On Error GoTo 0
-    
+
     ' Pokud uivatel klikl na Cancel, ukonèíme proceduru
     If selectedRange Is Nothing Then
         Exit Sub
     End If
+
+    ' Definování platného rozsahu, ve kterém lze mìnit hodnoty
+    Dim validRange As Range
+    Set validRange = ws.Range(ws.Cells(5, 5), ws.Cells(4 + numOfCriteria, 4 + numOfCandidates))
     
-    ' Projdeme kadou vybranou buòku z rozsahu
+    ' Inicializace promìnné pro sledování stavu
+    cancelEditing = False
+
+    ' Kontrola pro kadou vybranou buòku z rozsahu, zda je buòka v povoleném rozsahu
     For Each cell In selectedRange
-        ' Zavoláme proceduru FillDataForm pro kadou buòku zvláš
-        FillDataForm cell
+        If Not Intersect(cell, validRange) Is Nothing Then
+        
+            ' Zavoláme proceduru FillDataForm pro kadou povolenou buòku
+            FillDataForm cell
+            
+            ' Kontrola, zda došlo k zrušení procesu
+            If cancelEditing Then
+                Exit Sub
+            End If
+        Else
+            ' Pokud je buòka mimo povolenı rozsah, zobrazíme varování a pøeskoèíme ji
+            MsgBox "Buòku " & cell.Address & " nelze upravit.", vbExclamation
+        End If
     Next cell
-    
 End Sub
 
 ' Procedura volající formuláø pro pøidání dalších kritérií
@@ -506,4 +491,3 @@ Sub RemoveCandidate()
     ' Zavolání formuláøe pro odebrání varianty
     RemoveCandidateForm.Show
 End Sub
-
