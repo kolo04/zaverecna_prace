@@ -285,15 +285,15 @@ Sub M4_metoda_Bazicke_varianty()
             .Select
         End With
         
-        If .Columns(5 + numOfCandidates).ColumnWidth < 12 Then
-            .Columns(5 + numOfCandidates).ColumnWidth = 12
-        End If
-        
         ' Zavolání procedury pro kontrolu, zda je nìkterá z variant dominována jinou
         Call FindDominatedCandidates(ws)
         
         ' Úprava šíøky sloupcù (Autofit na minimálnì 80px)
         AdjustColumnWidth ws, .Range(.Columns(5 + numOfCandidates), .Columns(7 + numOfCandidates))
+        
+        If .Columns(5 + numOfCandidates).ColumnWidth < 12 Then
+            .Columns(5 + numOfCandidates).ColumnWidth = 12
+        End If
         
         ' Volání funkce, která vykreslí rozbalovací seznam
         ' Parametry jsou WorkSheet (ws), výstup (targetCell) a možnosti (optionsRange)

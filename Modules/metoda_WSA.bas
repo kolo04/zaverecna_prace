@@ -134,7 +134,6 @@ Sub M3_metoda_WSA()
     
     ' Úprava šíøky sloupcù (Autofit na minimálnì 80px)
     AdjustColumnWidth ws, ws.Range(ws.Columns(2), ws.Columns(4 + numOfCandidates))
-    ws.Columns(5 + numOfCandidates).ColumnWidth = 10.33
     
     With ws
         ' Popisek tabulky po maximalizaci minimalizaèních kritérií
