@@ -138,6 +138,9 @@ Sub AddRestartButton()
     On Error Resume Next
     ws.Shapes("RestartButton").Delete
     On Error GoTo 0
+    
+    ' Úprava šíøky sloupce A
+    ws.Columns("A").ColumnWidth = 15
 
     ' Vytvoøení tlaèítka s urèenými parametry
     Set btn = ws.Shapes.AddShape(msoShapeBevel, buttonLeft, buttonTop, buttonWidth, buttonHeight)
@@ -175,9 +178,6 @@ Sub AddRestartButton()
 
     ' Pøiøazení makra k tlaèítku
     btn.OnAction = macroName
-
-    ' Úprava šíøky sloupce A
-    ws.Columns("A").ColumnWidth = 15
 End Sub
 
 ' Skript pro nahrávání dat z vybrané oblasti (z libovolného sešitu)
@@ -365,3 +365,155 @@ Function CheckFilledCells(rng As Range, dataType As String) As Boolean
     ' Vrátíme výsledek, zda jsou všechny buòky vyplnìné
     CheckFilledCells = isFilled
 End Function
+
+Sub FindDominatedCandidates(ws As Worksheet)
+    Dim wsInput As Worksheet
+    Dim numOfCriteria As Integer
+    Dim numOfCandidates As Integer
+    Dim i As Integer, j As Integer, k As Integer
+    Dim isDominated As Boolean
+    Dim isSuperior As Boolean
+    Dim dominatedCandidates As String
+    Dim criteriaObjectives As Variant
+    
+    ' Definice vstupního listu
+    Set wsInput = ThisWorkbook.Sheets("Vstupní data")
+    
+    ' Naètení poètu kritérií a variant
+    numOfCriteria = wsInput.Range("C2").value
+    numOfCandidates = wsInput.Range("F2").value
+    
+    ' Naètení cílù kritérií (min/max)
+    criteriaObjectives = wsInput.Range(wsInput.Cells(5, 3), wsInput.Cells(4 + numOfCriteria, 3)).value
+    
+    ' Inicializace seznamu dominovaných kandidátù
+    dominatedCandidates = ""
+
+    ' Procházení všech variant
+    For i = 1 To numOfCandidates
+        isDominated = False ' Pøedpokládáme, že varianta i není dominovaná
+        
+        For j = 1 To numOfCandidates
+            If i <> j Then
+                ' Pøedpokládáme, že varianta i je dominovaná variantou j
+                Dim presumablyDominated As Boolean
+                presumablyDominated = True
+                isSuperior = False
+                
+                For k = 1 To numOfCriteria
+                    Dim valueI As Double
+                    Dim valueJ As Double
+                    Dim objective As String
+                    
+                    ' Naètení hodnot z tabulky
+                    valueI = wsInput.Cells(4 + k, 4 + i).value
+                    valueJ = wsInput.Cells(4 + k, 4 + j).value
+                    objective = criteriaObjectives(k, 1)
+                    
+                    ' Kontrola podle cíle kritéria
+                    If objective = "max" Then
+                        ' Pro maximalizaci musí být J >= I a J > I alespoò v jednom kritériu
+                        If valueJ < valueI Then
+                            presumablyDominated = False
+                            Exit For
+                        ElseIf valueJ > valueI Then
+                            isSuperior = True
+                        End If
+                    ElseIf objective = "min" Then
+                        ' Pro minimalizaci musí být J <= I a J < I alespoò v jednom kritériu
+                        If valueJ > valueI Then
+                            presumablyDominated = False
+                            Exit For
+                        ElseIf valueJ < valueI Then
+                            isSuperior = True
+                        End If
+                    End If
+                Next k
+                
+                ' Pokud varianta j dominuje variantu i
+                If presumablyDominated And isSuperior Then
+                    isDominated = True
+                    Exit For
+                End If
+            End If
+        Next j
+        
+        ' Pøidání dominované varianty do seznamu
+        If isDominated Then
+            dominatedCandidates = dominatedCandidates & wsInput.Cells(4, 4 + i).value & ", "
+        End If
+    Next i
+
+    ' Pokud existují dominované varianty
+    If Len(dominatedCandidates) > 0 Then
+        ' Odebrání poslední èárky a mezery
+        dominatedCandidates = Left(dominatedCandidates, Len(dominatedCandidates) - 2)
+        
+        ' Zobrazení výsledkù v buòce
+        With ws
+            .Cells(6 + numOfCriteria, 6 + numOfCandidates).value = "Dominované varianty:"
+            .Cells(6 + numOfCriteria, 6 + numOfCandidates).Font.Italic = True
+            .Cells(6 + numOfCriteria, 7 + numOfCandidates).value = dominatedCandidates
+        End With
+    End If
+End Sub
+
+' Funkce pro kontrolu rozmanitosti hodnot kritérií
+Function CheckUniqueRowValues() As Boolean
+    Dim ws As Worksheet
+    Dim numOfCriteria As Long, numOfCandidates As Long
+    Dim rowStart As Long, colStart As Long
+    Dim i As Long, j As Long
+    Dim rowValues As Object
+    Dim uniqueCount As Long
+    Dim criterionName As String
+
+    ' Nastavení výchozí návratové hodnoty
+    CheckUniqueRowValues = False
+
+    ' Nastavení pracovního listu
+    Set ws = ThisWorkbook.Sheets("Vstupní data")
+
+    ' Získání poètu kritérií a variant
+    numOfCriteria = ws.Range("C2").value
+    numOfCandidates = ws.Range("F2").value
+
+    ' Poèáteèní øádek a sloupec pro kontrolu
+    rowStart = 5
+    colStart = 5
+
+    ' Procházení øádkù v rozsahu
+    For i = 0 To numOfCriteria - 1
+        ' Získání názvu kritéria ze sloupce 2
+        criterionName = ws.Cells(rowStart + i, 2).value
+
+        ' Inicializace objektu pro sledování unikátních hodnot
+        Set rowValues = CreateObject("Scripting.Dictionary")
+        
+        ' Procházení sloupcù v aktuálním øádku
+        For j = 0 To numOfCandidates - 1
+            Dim cellValue As Variant
+            cellValue = ws.Cells(rowStart + i, colStart + j).value
+            
+            ' Pøidání hodnoty do seznamu, pokud není prázdná
+            If Not IsEmpty(cellValue) Then
+                If Not rowValues.Exists(cellValue) Then
+                    rowValues.Add cellValue, True
+                End If
+            End If
+        Next j
+        
+        ' Zjištìní poètu unikátních hodnot
+        uniqueCount = rowValues.Count
+        
+        ' Pokud jsou všechny hodnoty stejné (nebo prázdné), vyvolání chyby
+        If uniqueCount <= 1 Then
+            MsgBox "Kritérium """ & criterionName & """ ve øádku " & (rowStart + i) & _
+                   " obsahuje stejné hodnoty. Kritérium buï pro zbyteènost odstraòte, nebo zmìòte jeho hodnoty.", vbExclamation
+            CheckUniqueRowValues = True
+            Exit Function
+        End If
+    Next i
+End Function
+
+

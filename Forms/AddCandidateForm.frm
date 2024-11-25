@@ -144,7 +144,7 @@ Private Sub Upload_Click()
                 End If
 
                 ' Kontrola duplicit v rámci novì vkládaných dat
-                If UniqueValues.exists(cell.value) Then
+                If UniqueValues.Exists(cell.value) Then
                     duplicateFound = True
                     Exit For
                 Else
@@ -171,9 +171,6 @@ Private Sub Upload_Click()
 
     Call Update
     
-    ' Pøidání tlaèítka pro nový pøíklad
-    Call AddRestartButton
-    
     Unload Me
 End Sub
 
@@ -191,6 +188,22 @@ Private Sub Update()
     ' Získání aktuálního poètu kritérií a variant z listu
     numOfCriteria = ws.Range("C2").value
     numOfCandidates = ws.Range("F2").value
+    
+    ' Nastavení nové varianty na tuènì a podtržení
+    With Range(ws.Cells(4, 5), ws.Cells(4, 5 + numOfCandidates - 1))
+        .Font.Bold = True
+        .HorizontalAlignment = xlCenter
+        
+        With .Borders(xlEdgeBottom)
+            .LineStyle = xlContinuous
+            .ColorIndex = 0
+            .TintAndShade = 0
+            .Weight = xlThin
+        End With
+    End With
+    
+    ' Úprava šíøky novì pøidaného sloupce
+    AdjustColumnWidth ws, ws.Range(ws.Columns(5), ws.Columns(4 + numOfCandidates))
     
     ' Pøidání tlaèítka pro pøidání dalších kritérií
     AddButtonTo ws, ws.Range("B" & 6 + numOfCriteria), "Pøidat kritérium", "AddMoreCriteria"
@@ -223,9 +236,6 @@ Private Sub Update()
 
         End If
     End If
-            
-    ' Získání aktuálního poètu kritérií
-    numOfCandidates = ws.Range("F2").value
     
     If Not IsEmpty(numOfCandidates) Then
         ' Pøidání tlaèítka pro pøidání dalších variant
@@ -237,21 +247,8 @@ Private Sub Update()
         End If
     End If
     
-    ' Nastavení nové varianty na tuènì a podtržení
-    With Range(ws.Cells(4, 5), ws.Cells(4, 5 + numOfCandidates - 1))
-        .Font.Bold = True
-        .HorizontalAlignment = xlCenter
-        
-        With .Borders(xlEdgeBottom)
-            .LineStyle = xlContinuous
-            .ColorIndex = 0
-            .TintAndShade = 0
-            .Weight = xlThin
-        End With
-    End With
-    
-    ' Úprava šíøky novì pøidaného sloupce
-    AdjustColumnWidth ws, 4 + numOfCandidates
+    ' Pøidání tlaèítka pro nový pøíklad
+    Call AddRestartButton
     
     ThisWorkbook.Sheets("Vstupní data").Protect "1234"
     

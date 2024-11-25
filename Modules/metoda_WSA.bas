@@ -13,6 +13,11 @@ Sub M3_metoda_WSA()
     
     ' Volání kontroly vyplnìných hodnot
     Call CheckFilledData
+    
+    ' Kontrola unikátních hodnot v øádcích
+    If CheckUniqueRowValues() Then
+        Exit Sub
+    End If
 
 ' Ovìøení existence listu "Metoda WSA"
     Dim wsExists As Boolean
@@ -236,47 +241,45 @@ Sub M3_metoda_WSA()
         .Range(.Cells(13 + (2 * numOfCriteria), 5), .Cells(13 + (2 * numOfCriteria), 4 + numOfCandidates)).FormatConditions.AddColorScale ColorScaleType:=3
         
         ' Popisek nejvyššího užitku
-        With .Cells(12 + (2 * numOfCriteria), 6 + numOfCandidates)
+        With .Cells(17 + numOfCriteria, 6 + numOfCandidates)
             .formula = "Nejvyšší užitek:"
             .Font.Bold = True
             .EntireColumn.AutoFit
         End With
         
-        ' Vyhledání a zobrazení užitku od nejvyššího po nejnižší
-        Dim rowCounter As Long
-        
-        ' Nastavení poèáteèního øádku pro výstup
-        rowCounter = 12 + (2 * numOfCriteria)
-        
         ' Cyklus pro vypsání výsledkù od nejlepšího po nejhoršímu
         For i = 1 To numOfCandidates
             ' Vyhledání a zobrazení i-tého nejvyššího užitku
-            .Cells(rowCounter, 7 + numOfCandidates).Formula2 = "=XLOOKUP(LARGE(" & .Range(.Cells(13 + (2 * numOfCriteria), 5), _
+            .Cells(16 + numOfCriteria + i, 7 + numOfCandidates).Formula2 = "=XLOOKUP(LARGE(" & .Range(.Cells(13 + (2 * numOfCriteria), 5), _
                     .Cells(13 + (2 * numOfCriteria), 4 + numOfCandidates)).Address & "," & i & ")" & "," & _
                     .Range(.Cells(13 + (2 * numOfCriteria), 5), .Cells(13 + (2 * numOfCriteria), 4 + numOfCandidates)).Address & "," & _
                     .Range(.Cells(12 + (2 * numOfCriteria), 5), .Cells(12 + (2 * numOfCriteria), 4 + numOfCandidates)).Address & ",,0,1)"
             
-            .Cells(rowCounter, 7 + numOfCandidates).HorizontalAlignment = xlCenter
-            
-            ' Posunutí na další øádek pro další výsledek
-            rowCounter = rowCounter + 1
+            .Cells(16 + numOfCriteria + i, 7 + numOfCandidates).HorizontalAlignment = xlCenter
         Next i
 
         ' Úprava formátování nejlepší varianty
-        With .Cells(12 + (2 * numOfCriteria), 7 + numOfCandidates)
+        With .Cells(17 + numOfCriteria, 7 + numOfCandidates)
             .Font.Bold = False
             .Font.Italic = True
         End With
 
-        ' Nastavení popisku pro vybrání správné varianty
+        ' Nastavení popisku pro vybrání testované varianty
         With .Range(.Cells(9 + numOfCriteria, 5 + numOfCandidates), .Cells(9 + numOfCriteria, 6 + numOfCandidates))
             .Merge
-            .value = "Jaká varianta má být správná:"
+            .value = "Jaká varianta má být testována:"
             .VerticalAlignment = xlCenter
             .Font.Bold = True
             .WrapText = False
             .Select
         End With
+        
+        If .Columns(5 + numOfCandidates).ColumnWidth < 12 Then
+            .Columns(5 + numOfCandidates).ColumnWidth = 12
+        End If
+        
+        ' Zavolání procedury pro kontrolu, zda je nìkterá z variant dominována jinou
+        Call FindDominatedCandidates(ws)
         
         ' Úprava šíøky sloupcù (Autofit na minimálnì 80px)
         AdjustColumnWidth ws, .Range(.Columns(5 + numOfCandidates), .Columns(6 + numOfCandidates))
@@ -286,7 +289,7 @@ Sub M3_metoda_WSA()
         AddComboBox ws, "newBestCandidateWSA", ws.Cells(9 + numOfCriteria, 7 + numOfCandidates), ws.Range(.Cells(12 + (2 * numOfCriteria), 5), .Cells(12 + (2 * numOfCriteria), 4 + numOfCandidates)), "newBestCandidateWSA_Change"
         
         ' Volání funkce pro pøidání tlaèítka na spuštìní Solveru
-        AddButtonTo ws, ws.Cells(8 + (2 * numOfCriteria), 7 + numOfCandidates), "Vyøešit", "CallSolverWSA"
+        AddButtonTo ws, ws.Cells(14 + numOfCriteria, 7 + numOfCandidates), "Vyøešit", "CallSolverWSA"
         
         ' Pøidání tlaèítka pro opìtovné nahrání vstupních dat
         AddButtonTo ws, ws.Cells(4, 7 + numOfCandidates), "Aktualizovat", "M3_metoda_WSA"

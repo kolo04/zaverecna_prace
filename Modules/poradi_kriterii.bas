@@ -190,7 +190,7 @@ Sub CountWeight()
             Exit Sub
             
         ' Poøadí již evidáno
-        ElseIf ranks.exists(value) Then
+        ElseIf ranks.Exists(value) Then
             ranks(value) = ranks(value) + 1
             
         ' Pøidání nové hodnoty poøadí
@@ -203,7 +203,7 @@ Sub CountWeight()
     Next i
     
     ' Kontrola, zda je jednièka ve sloupci poøadí
-    If Not ranks.exists(1) Then
+    If Not ranks.Exists(1) Then
         MsgBox "Poøadí musí zaèínat od 1.", vbExclamation
         Exit Sub
     End If
@@ -215,7 +215,7 @@ Sub CountWeight()
     
     ' Pøidání chybìjících poøadí pro rozdìlení bodù
     For i = 1 To numOfCriteria
-        If Not ranks.exists(i) Then
+        If Not ranks.Exists(i) Then
             filledRanks.Add i
         End If
     Next i

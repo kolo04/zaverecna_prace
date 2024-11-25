@@ -59,7 +59,7 @@ Private Sub Add_Click()
     
     ' Urèení øádku pro nové kritérium
     Dim lastRow As Long
-    lastRow = ws.Cells(ws.Rows.Count, "B").End(xlUp).Row + 1
+    lastRow = ws.Cells(ws.Rows.Count, "B").End(xlUp).row + 1
     
     Dim validInput As Boolean
     
@@ -157,7 +157,7 @@ Private Sub Upload_Click()
                 End If
                 
                 ' Kontrola duplicit v aktuálním slovníku
-                If UniqueValues.exists(cell.value) Then
+                If UniqueValues.Exists(cell.value) Then
                     duplicateFound = True
                     Exit For
                 End If
@@ -180,12 +180,9 @@ Private Sub Upload_Click()
     End If
 
     ' Uzamknutí listu na konci procedury
-    ws.Protect "1234"
+    ThisWorkbook.Sheets("Vstupní data").Protect "1234"
 
     Call Update
-    
-    ' Pøidání tlaèítka pro nový pøíklad
-    Call AddRestartButton
     
     Unload Me
 End Sub
@@ -235,6 +232,9 @@ Private Sub Update()
     
     ' Úprava šíøky sloupce kritérií
     AdjustColumnWidth ws, 2
+    
+    ' Pøidání tlaèítka pro nový pøíklad
+    Call AddRestartButton
     
     ThisWorkbook.Sheets("Vstupní data").Protect "1234"
     

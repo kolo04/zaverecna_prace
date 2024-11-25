@@ -52,9 +52,12 @@ Sub InputData()
     
     ' Vytvoøení listu, pokud ještì neexistuje
     If Not wsExists Then
+        ThisWorkbook.Unprotect "1234"
+        
         ' Pøidání listu za poslední již existující list
         Set ws = ThisWorkbook.Sheets.Add(After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.Count))
         ws.name = "Vstupní data"
+                
         ' Pøesun na novì vytvoøený list
         ws.Activate
         ws.Unprotect "1234"
@@ -91,9 +94,6 @@ Sub InputData()
             End If
             
             .Unprotect "1234"
-            
-            ' Pøidání pro nový pøíklad
-            Call AddRestartButton
             
             ' Získání poètu kritérií
             numOfCriteria = .Range("C2").value
@@ -239,6 +239,10 @@ Sub FillData()
         HideButton ws, "Pokraèovat"
         
         If Not IsEmpty(ws.Range(ws.Cells(5, 5), ws.Cells(4 + numOfCriteria, 4 + numOfCandidates))) Then
+            ' Pokud jsou buòky již vyplnìny, není tøeba je znovu vkládat
+            HideButton ws, "Vložit hodnoty"
+            HideButton ws, "Nahrát hodnoty"
+            
             ' Pøidání tlaèítka pro úpravu vyplnìných hodnot
             AddButtonTo ws, ws.Range("F" & 6 + numOfCriteria), "Upravit hodnoty", "EditCellValue"
         Else
@@ -278,7 +282,7 @@ Sub FillDataForm(cellRef As Variant)
     numOfCandidates = ws.Range("F2").value
     
     ' Získání názvu kritéria a varianty
-    criteriaName = ws.Cells(cell.Row, 2).value
+    criteriaName = ws.Cells(cell.row, 2).value
     variantName = ws.Cells(4, cell.column).value
     
     ' Oznaèení buòky pro zadání hodnoty a zobrazení aktuální hodnoty

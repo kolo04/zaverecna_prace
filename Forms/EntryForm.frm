@@ -20,6 +20,8 @@ Private Sub UserForm_Initialize()
     
     wsExists = False
     
+    ThisWorkbook.Activate
+    
     For Each ws In ThisWorkbook.Sheets
         If ws.name = "Vstupní data" Then
             wsExists = True
@@ -32,33 +34,34 @@ Private Sub UserForm_Initialize()
             Height = 135
             Width = 269
         Else
-            Call InputData
             Unload Me
+            Call InputData
+            End
         End If
     End With
     
 End Sub
 
 Private Sub Manual_Click()
-    ' Volání metody pro stanovení vah výpoètem
+    Unload Me
+    
+    ' Volání metody pro vkládání nového pøíkladu
     Call InputData
-    Unload Me ' Zavøe formuláø po dokonèení
 End Sub
 
 
 Private Sub KeepCurrent_Click()
-    
     'Zavøení formuláøe a pøesun na list Vstupní data
-    Sheets("Vstupní data").Activate
     Unload Me
+    Sheets("Vstupní data").Activate
 
 End Sub
 
 Private Sub UserForm_QueryClose(Cancel As Integer, CloseMode As Integer)
     ' Kontrola, zda byl formuláø zavøen pomocí tlaèítka "X" (CloseMode = 0)
     If CloseMode = vbFormControlMenu Then
-        Sheets("Vstupní data").Activate
         Unload Me ' Zavíráme formuláø
+        Sheets("Vstupní data").Activate
     End If
 End Sub
 
