@@ -78,6 +78,11 @@ Private Sub UserForm_Initialize()
         ' Úprava šíøky sloupcù
         AdjustColumnWidth ws, .Range(.Columns(2), .Columns(3))
         
+        HideButton ws, "Stanovit váhy"
+        HideButton ws, "Stanovit cíle"
+        ' Pøidání tlaèítka pro stanovení cílù
+        AddButtonTo ws, ws.Range("F" & 6 + numOfCriteria), "Stanovit cíle", "SetObjectives"
+        
         .Cells(5, 3).Select
         
         .Protect "1234"

@@ -29,6 +29,14 @@ Sub UploadObjectives()
     
     Call CheckObjectives(Objectives, ws)
     
+    With ws
+        .Unprotect "1234"
+        .Range(.Cells(5, 3), .Cells(4 + numOfCriteria, 3)).HorizontalAlignment = xlCenter
+        .Protect "1234"
+    End With
+
+
+    
 End Sub
 
 ' Procedura pro nahrání bloku dat (kritéria x varianty) z externího souboru do tabulky
@@ -143,6 +151,7 @@ Sub CheckObjectives(Objectives As Range, ws As Worksheet)
         
         If validObjectives Then
             HideButton ws, "Stanovit cíle"
+            HideButton ws, "Nahrát cíle"
             
             ' Naètení poètu kritérií
             numOfCriteria = ws.Range("C2").value
@@ -174,3 +183,5 @@ Sub CheckWeights(weights As Range, ws As Worksheet)
         MsgBox "Nìkteré váhy nejsou vyplnìné.", vbExclamation
     End If
 End Sub
+
+

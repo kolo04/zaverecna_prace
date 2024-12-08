@@ -68,24 +68,64 @@ Sub M5_Solver(ws As Worksheet, cboName As String)
 
     ' Vytvoøení a úprava listu minimalizace
     CreateAndConfigureSheet ws, selectedCandidate, selectedColumn, minSheetName, True
-    
+
     ' Spuštìní Solveru pro minimalizaci
+    Dim resultMin As Integer
+    Dim errorMessageMin As String
     ThisWorkbook.Sheets(minSheetName).Activate
-    SolverSolve UserFinish:=True
+    resultMin = SolverSolve(UserFinish:=True)
+    
+    ' Zpracování výsledku minimalizace
+    Select Case resultMin
+        Case 0
+            ' Žádná chyba, øešení bylo nalezeno
+        Case 1
+            ' Model minimalizace nemohl být vylepšen
+        Case 5
+            errorMessageMin = "Solver nemohl najít dostupné øešení pro minimalizaci."
+        Case 6
+            ' Solver byl zastaven uživatelem
+        Case 8
+            errorMessageMin = "Model je pøíliš velký pro Solver. Minimalizace nebyla provedena."
+        Case Else
+            If resultMin <> 0 Then
+                errorMessageMin = "Pøi minimalizaci došlo k neznámé chybì (kód: " & resultMin & ")."
+            End If
+    End Select
     SolverFinish KeepFinal:=1
 
     ' Vytvoøení a úprava listu maximalizace
     CreateAndConfigureSheet ws, selectedCandidate, selectedColumn, maxSheetName, False
-    
+
     ' Spuštìní Solveru pro maximalizaci
+    Dim resultMax As Integer
+    Dim errorMessageMax As String
     ThisWorkbook.Sheets(maxSheetName).Activate
-    SolverSolve UserFinish:=True
+    resultMax = SolverSolve(UserFinish:=True)
+    
+    ' Zpracování výsledku maximalizace
+    Select Case resultMax
+        Case 0
+            ' Žádná chyba, øešení bylo nalezeno
+        Case 1
+            ' Model maximalizace nemohl být vylepšen
+        Case 5
+            errorMessageMax = "Solver nemohl najít dostupné øešení pro maximalizaci."
+        Case 6
+            ' Solver byl zastaven uživatelem
+        Case 8
+            errorMessageMax = "Model je pøíliš velký pro Solver. Maximalizace nebyla provedena."
+        Case Else
+            If resultMax <> 0 Then
+                errorMessageMax = "Pøi maximalizaci došlo k neznámé chybì (kód: " & resultMax & ")."
+            End If
+    End Select
     SolverFinish KeepFinal:=1
     
     Set wsMin = ThisWorkbook.Sheets(minSheetName)
     Set wsMax = ThisWorkbook.Sheets(maxSheetName)
 
-    
+    ' Kopírování hodnot a zamykání listù
     With wsMin
         .Range(.Cells(15 + (2 * numOfCriteria) + 1, 4), .Cells(15 + (3 * numOfCriteria), 4)).value _
                 = .Range(.Cells(10 + numOfCriteria + 1, 4), .Cells(10 + (2 * numOfCriteria), 4)).value
@@ -108,8 +148,21 @@ Sub M5_Solver(ws As Worksheet, cboName As String)
         .Protect "1234"
     End With
 
-    ' Oznámení dokonèení
-    MsgBox "Výsledky jsou dostupné na listech: " & minSheetName & " a " & maxSheetName, vbInformation
+    ' Sestavení a zobrazení finální zprávy
+    Dim finalMessage As String
+    finalMessage = ""
+
+    If errorMessageMin <> "" Then
+        finalMessage = finalMessage & errorMessageMin & vbCrLf
+    End If
+
+    If errorMessageMax <> "" Then
+        finalMessage = finalMessage & errorMessageMax & vbCrLf
+    End If
+
+    finalMessage = finalMessage & "Výsledky jsou dostupné na listech: " & minSheetName & " a " & maxSheetName
+
+    MsgBox finalMessage, vbInformation
     
 End Sub
 
@@ -553,5 +606,3 @@ Sub newBestCandidate_Change(ws As Worksheet, newBestCandidateName As String)
         End If
     Next cbo
 End Sub
-
-

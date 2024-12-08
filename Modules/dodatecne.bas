@@ -515,5 +515,3 @@ Function CheckUniqueRowValues() As Boolean
         End If
     Next i
 End Function
-
-

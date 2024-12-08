@@ -12,6 +12,9 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
+Dim ws As Worksheet
+Dim numOfCriteria As Integer
+
 Private Sub UserForm_Initialize()
     
     ' Nastavení focus na ListBox
@@ -29,8 +32,7 @@ End Sub
 Private Sub RemoveButton_Click()
     Dim selectedCriteriaIndex As Integer
     Dim selectedCriteria As String
-    Dim ws As Worksheet
-    Dim numOfCriteria As Integer
+
     
     ' Nastavení pracovního listu, kde jsou kritéria uložena
     Set ws = ThisWorkbook.Sheets("Vstupní data")
@@ -62,17 +64,13 @@ Private Sub RemoveButton_Click()
         
         HideButton ws, "Pokraèovat"
         HideButton ws, "Nahrát cíle"
+        HideButton ws, "Upravit hodnoty"
         HideButton ws, "Metoda WSA"
         HideButton ws, "Metoda bazické varianty"
+        HideButton ws, "Stanovit váhy"
         
         ' Získání poètu kritérií
         numOfCriteria = ws.Range("C2").value
-        
-        ' Stanovit váhy lze pouze, když jsou pøítomna aspoò dvì kritéria
-        If numOfCriteria > 1 Then
-            HideButton ws, "Stanovit váhy"
-            AddButtonTo ws, ws.Range("F" & 6 + numOfCriteria), "Stanovit váhy", "SetWeights"
-        End If
     End With
     
     ' Pokud bude poèet položek v ListBoxu < 2, schování tlaèítka
@@ -93,3 +91,25 @@ Private Sub RemoveButton_Click()
     
     ws.Protect "1234"
 End Sub
+
+Private Sub UserForm_QueryClose(Cancel As Integer, CloseMode As Integer)
+    ' Kontrola, zda byl formuláø zavøen pomocí tlaèítka "X" (CloseMode = 0)
+    If CloseMode = vbFormControlMenu Then
+    
+        ' Nastavení pracovního listu, kde jsou kritéria uložena
+        Set ws = ThisWorkbook.Sheets("Vstupní data")
+        
+        With ws
+            .Unprotect "1234"
+        
+            ' Získání poètu kritérií
+            numOfCriteria = .Range("C2").value
+            
+            AddButtonTo ws, ws.Range("F" & 6 + numOfCriteria), "Stanovit váhy", "SetWeights"
+            .Protect "1234"
+        End With
+        
+        Unload Me
+    End If
+End Sub
+
